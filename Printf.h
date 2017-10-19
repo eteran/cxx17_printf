@@ -498,18 +498,16 @@ template <class T>
 constexpr const char *formatted_string([[maybe_unused]] T s) {
 	if constexpr(std::is_convertible<T, const char *>::value) {
 		return static_cast<const char *>(s);
-	} else {
-		ThrowError("Non-String Argument For String Format");
 	}
+	ThrowError("Non-String Argument For String Format");
 }
 
 template <class R, class T>
 constexpr R formatted_pointer([[maybe_unused]] T p) {
 	if constexpr(std::is_convertible<T, const void *>::value) {
 		return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
-	} else {
-		ThrowError("Non-Pointer Argument For Pointer Format");
 	}
+	ThrowError("Non-Pointer Argument For Pointer Format");
 }
 
 
@@ -517,9 +515,8 @@ template <class R, class T>
 constexpr R formatted_integer([[maybe_unused]] T n) {
 	if constexpr(std::is_integral<T>::value) {
 		return static_cast<R>(n);
-	} else {
-		ThrowError("Non-Integer Argument For Integer Format");
 	}
+	ThrowError("Non-Integer Argument For Integer Format");
 }
 
 //------------------------------------------------------------------------------
