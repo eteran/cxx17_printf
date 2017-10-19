@@ -495,32 +495,29 @@ std::string formatted_object(T obj) {
 #endif
 
 template <class T>
-constexpr const char *formatted_string(T s) {
+constexpr const char *formatted_string([[maybe_unused]] T s) {
 	if constexpr(std::is_convertible<T, const char *>::value) {
 		return static_cast<const char *>(s);
 	} else {
-		(void)s;
 		ThrowError("Non-String Argument For String Format");
 	}
 }
 
 template <class R, class T>
-constexpr R formatted_pointer(T p) {
+constexpr R formatted_pointer([[maybe_unused]] T p) {
 	if constexpr(std::is_convertible<T, const void *>::value) {
 		return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
 	} else {
-		(void)p;
 		ThrowError("Non-Pointer Argument For Pointer Format");
 	}
 }
 
 
 template <class R, class T>
-constexpr R formatted_integer(T n) {
+constexpr R formatted_integer([[maybe_unused]] T n) {
 	if constexpr(std::is_integral<T>::value) {
 		return static_cast<R>(n);
 	} else {
-		(void)n;
 		ThrowError("Non-Integer Argument For Integer Format");
 	}
 }
