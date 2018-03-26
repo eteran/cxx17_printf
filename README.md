@@ -16,7 +16,7 @@ NOTE: floating point is not implemented, as it is complex to do correctly, but
       is on the TODO list.
 	  
 Usage is similar to `snprintf`, but more robust. Instead of a buffer/size pair
-being passed as a parameter, you pass a context object which has two functions
+being passed as a parameter, you pass a context object which has 3 functions
 and a data member:
 
 	// writes a single character to the output of your choosing
@@ -65,8 +65,8 @@ printf. Here is the included test program's output on my machine:
 
 	hello      world, A, -123, 00001234 0x7ffff03cb7c8 0000004294967292 ffffffff 0000000000000100
 	hello      world, A, -123, 00001234 0x7ffff03cb7c8 0000004294967292 ffffffff 0000000000000100
-	cxx17 Took:  366344 µs to execute.
-	printf Took: 384387 µs to execute.
+	cxx17 Took:  366344 Âµs to execute.
+	printf Took: 384387 Âµs to execute.
 
 
 When profile guided optimizations are used, it performs even better. I am sure 
