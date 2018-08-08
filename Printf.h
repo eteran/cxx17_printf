@@ -13,6 +13,16 @@
 
 //#define CXX17_PRINTF_EXTENSIONS
 
+#ifdef __GNUC__
+	#define LIKELY(expr)   __builtin_expect((expr), 1)
+	#define UNLIKELY(expr) __builtin_expect((expr), 0)
+	#define NO_INLINE      __attribute__ ((noinline))
+#else
+	#define LIKELY(expr)   (expr)
+	#define UNLIKELY(expr) (expr)
+	#define NO_INLINE
+#endif
+
 namespace cxx17 {
 
 struct format_error : std::runtime_error {
@@ -46,28 +56,13 @@ struct Flags {
 static_assert(sizeof(Flags) == sizeof(uint8_t));
 
 
-[[noreturn]] void __attribute__ ((noinline)) ThrowError(const char *what) {
+[[noreturn]] void NO_INLINE ThrowError(const char *what) {
 	throw format_error(what);
 }
 
-// NOTE(eteran): by placing this in a class, it allows us to do things like specialization a lot easier
-template <unsigned int Divisor>
-struct itoa_helper;
-
-template <>
-struct itoa_helper<10> {
-	static constexpr int Divisor = 10;
-
-public:
-	//------------------------------------------------------------------------------
-	// Name: format
-	// Desc: returns the value of d as a C-string, formatted based on Divisor,
-	//       and flags.
-	//------------------------------------------------------------------------------
-	template <class T, size_t N>
-	static std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
-
-
+template <bool Upper, size_t Divisor, class T, size_t N>
+std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
+	if constexpr(Divisor == 10) {
 		static constexpr const char digit_pairs[201] = {"00010203040506070809"
 	                                            		"10111213141516171819"
 	                                            		"20212223242526272829"
@@ -84,13 +79,13 @@ public:
 			if (d >= 0) {
 				int div = d / 100;
 				while (div) {
-					memcpy(it, &digit_pairs[2 * (d - div * 100)], 2);
+					std::memcpy(it, &digit_pairs[2 * (d - div * 100)], 2);
 					d = div;
 					it -= 2;
 					div = d / 100;
 				}
 
-				memcpy(it, &digit_pairs[2 * d], 2);
+				std::memcpy(it, &digit_pairs[2 * d], 2);
 
 				if (d < 10) {
 					it++;
@@ -123,13 +118,13 @@ public:
 			} else {
 				int div = d / 100;
 				while (div) {
-					memcpy(it, &digit_pairs[-2 * (d - div * 100)], 2);
+					std::memcpy(it, &digit_pairs[-2 * (d - div * 100)], 2);
 					d = div;
 					it -= 2;
 					div = d / 100;
 				}
 
-				memcpy(it, &digit_pairs[-2 * d], 2);
+				std::memcpy(it, &digit_pairs[-2 * d], 2);
 
 				if (d <= -10) {
 					it--;
@@ -147,13 +142,13 @@ public:
 			if (d >= 0) {
 				int div = d / 100;
 				while (div) {
-					memcpy(it, &digit_pairs[2 * (d - div * 100)], 2);
+					std::memcpy(it, &digit_pairs[2 * (d - div * 100)], 2);
 					d = div;
 					it -= 2;
 					div = d / 100;
 				}
 
-				memcpy(it, &digit_pairs[2 * d], 2);
+				std::memcpy(it, &digit_pairs[2 * d], 2);
 
 				if (d < 10) {
 					it++;
@@ -186,25 +181,7 @@ public:
 		}
 
 		return std::make_tuple(it, &buf[N] - it);
-	}
-};
-
-
-
-// Specialization for base 16 so we can make some assumptions
-template <>
-struct itoa_helper<16> {
-	static constexpr int Divisor = 16;
-
-public:
-	//------------------------------------------------------------------------------
-	// Name: format
-	// Desc: returns the value of d as a C-string, formatted based on Divisor,
-	//       and flags.
-	//------------------------------------------------------------------------------
-	template <bool Upper, class T, size_t N>
-	static std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags, const char *alphabet) noexcept {
-
+	} else if constexpr (Divisor == 16) {
 		[[maybe_unused]]
 		static constexpr const char xdigit_pairs_l[513] = {"000102030405060708090a0b0c0d0e0f"
 	                                            		   "101112131415161718191a1b1c1d1e1f"
@@ -242,8 +219,11 @@ public:
 														   "E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF"
 														   "F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
 														   };
-
-
+														   
+		// NOTE(eteran): we include the x/X, here as an easy way to put the
+		//               upper/lower case prefix for hex numbers
+		[[maybe_unused]] static constexpr const char alphabet_l[] = "0123456789abcdefx";
+		[[maybe_unused]] static constexpr const char alphabet_u[] = "0123456789ABCDEFX";
 
 		typename std::make_unsigned<T>::type ud = d;
 
@@ -253,9 +233,9 @@ public:
 			while (ud > 16) {
 				p -= 2;
 				if constexpr (Upper) {
-					memcpy(p, &xdigit_pairs_u[2 * (ud & 0xff)], 2);
+					std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0xff)], 2);
 				} else {
-					memcpy(p, &xdigit_pairs_l[2 * (ud & 0xff)], 2);
+					std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0xff)], 2);
 				}
 				ud /= 256;
 			}
@@ -263,9 +243,9 @@ public:
 			while (ud > 0) {
 				p -= 1;
 				if constexpr (Upper) {
-					memcpy(p, &xdigit_pairs_u[2 * (ud & 0x0f) + 1], 1);
+					std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0x0f) + 1], 1);
 				} else {
-					memcpy(p, &xdigit_pairs_l[2 * (ud & 0x0f) + 1], 1);
+					std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0x0f) + 1], 1);
 				}
 				ud /= 16;
 			}
@@ -279,29 +259,17 @@ public:
 
 			// add the prefix as needed
 			if (flags.prefix) {
-				*--p = alphabet[16];
+				if constexpr (Upper) {
+					*--p = alphabet_u[16];
+				} else {
+					*--p = alphabet_l[16];
+				}
 				*--p = '0';
 			}
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
-	}
-};
-
-// Specialization for base 8 so we can make some assumptions
-template <>
-struct itoa_helper<8> {
-	static constexpr int Divisor = 8;
-
-public:
-	//------------------------------------------------------------------------------
-	// Name: format
-	// Desc: returns the value of d as a C-string, formatted based on Divisor,
-	//       and flags.
-	//------------------------------------------------------------------------------
-	template <class T, size_t N>
-	static std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
-
+	} else if constexpr (Divisor == 8) {
 		static constexpr const char digit_pairs[129] = {"0001020304050607"
 	                                            		"1011121314151617"
 	                                            		"2021222324252627"
@@ -311,10 +279,6 @@ public:
 	                                            		"6061626364656667"
 	                                            		"7071727374757677"
 														};
-
-
-
-
 		typename std::make_unsigned<T>::type ud = d;
 
 		char *p = buf + N;
@@ -322,13 +286,13 @@ public:
 		if (ud >= 0) {
 			while (ud > 64) {
 				p -= 2;
-				memcpy(p, &digit_pairs[2 * (ud & 077)], 2);
+				std::memcpy(p, &digit_pairs[2 * (ud & 077)], 2);
 				ud /= 64;
 			}
 
 			while (ud > 0) {			
 				p -= 1;
-				memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
+				std::memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
 				ud /= 8;
 			}
 
@@ -346,24 +310,7 @@ public:
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
-	}
-};
-
-// Specialization for base 2 so we can make some assumptions
-template <>
-struct itoa_helper<2> {
-	static constexpr int Shift = 1;
-	static constexpr int Mask  = 0x01;
-
-public:
-	//------------------------------------------------------------------------------
-	// Name: format
-	// Desc: returns the value of d as a C-string, formatted based on Divisor,
-	//       and flags.
-	//------------------------------------------------------------------------------
-	template <class T, size_t N>
-	static std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
-
+	} if constexpr (Divisor == 2) {
 		static constexpr const char digit_pairs[9] = { "00011011" };
 
 		typename std::make_unsigned<T>::type ud = d;
@@ -373,13 +320,13 @@ public:
 		if (ud >= 0) {
 			while (ud > 4) {
 				p -= 2;
-				memcpy(p, &digit_pairs[2 * (ud & 0x03)], 2);
+				std::memcpy(p, &digit_pairs[2 * (ud & 0x03)], 2);
 				ud /= 4;
 			}
 
 			while (ud > 0) {			
 				p -= 1;
-				memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
+				std::memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
 				ud /= 2;
 			}
 
@@ -398,7 +345,10 @@ public:
 
 		return std::make_tuple(p, (buf + N) - p);
 	}
-};
+	
+	ThrowError("Invalid Base Used In Integer To String Conversion");
+}
+
 
 //------------------------------------------------------------------------------
 // Name: itoa
@@ -414,28 +364,23 @@ std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, 
 		return std::make_tuple(buf, 0);
 	}
 
-	// NOTE(eteran): we include the x/X, here as an easy way to put the
-	//               upper/lower case prefix for hex numbers
-	constexpr const char alphabet_l[] = "0123456789abcdefx";
-	constexpr const char alphabet_u[] = "0123456789ABCDEFX";
-
 	switch (base) {
 	case 'i':
 	case 'd':
 	case 'u':
-		return itoa_helper<10>::format(buf, d, width, flags);
+		return format<false, 10>(buf, d, width, flags);
 #ifdef CXX17_PRINTF_EXTENSIONS
 	case 'b':
-		return itoa_helper<2>::format(buf, d, width, flags);
+		return format<false, 2>(buf, d, width, flags);
 #endif
 	case 'X':
-		return itoa_helper<16>::format<true>(buf, d, width, flags, alphabet_u);
+		return format<true, 16>(buf, d, width, flags);
 	case 'x':
-		return itoa_helper<16>::format<false>(buf, d, width, flags, alphabet_l);
+		return format<false, 16>(buf, d, width, flags);
 	case 'o':
-		return itoa_helper<8>::format(buf, d, width, flags);
+		return format<false, 8>(buf, d, width, flags);
 	default:
-		return itoa_helper<10>::format(buf, d, width, flags);
+		return format<false, 10>(buf, d, width, flags);
 	}
 }
 
@@ -773,7 +718,7 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 			ThrowError("Internal Error");
 		} else {
 			char *endptr;
-			p = strtol(format, &endptr, 10);
+			p = std::strtol(format, &endptr, 10);
 			format = endptr;
 			return get_modifier(ctx, format, flags, width, p, arg, ts...);
 		}
@@ -802,9 +747,8 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 		ThrowError("Internal Error");
 	} else {
 		char *endptr;
-		width = strtol(format, &endptr, 10);
+		width = std::strtol(format, &endptr, 10);
 		format = endptr;
-
 		return get_precision(ctx, format, flags, width, arg, ts...);
 	}
 }
@@ -821,40 +765,40 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 
 	// skip past the % char
 	++format;
-
-	while (!done) {
-
-		char ch = *format++;
-
-		switch (ch) {
+	do {
+		switch (*format) {
 		case '-':
 			// justify, overrides padding
 			f.justify = 1;
 			f.padding = 0;
+			++format;
 			break;
 		case '+':
 			// sign, overrides space
 			f.sign = 1;
 			f.space = 0;
+			++format;
 			break;
 		case ' ':
 			if (!f.sign) {
 				f.space = 1;
 			}
+			++format;
 			break;
 		case '#':
 			f.prefix = 1;
+			++format;
 			break;
 		case '0':
 			if (!f.justify) {
 				f.padding = 1;
 			}
+			++format;
 			break;
 		default:
 			done = true;
-			--format;
 		}
-	}
+	} while(!done);
 
 	return get_width(ctx, format, f, ts...);
 }
@@ -869,14 +813,23 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 	assert(format);
 
 	if constexpr (sizeof...(ts) > 0) {
-		while (*format != '\0') {
-			if (*format == '%') {
+		while (LIKELY(*format != '\0')) {
+			if (LIKELY(*format == '%')) {
 				// %[flag][width][.precision][length]char
 
 				// this recurses into get_width -> get_precision -> get_length -> process_format
 				return detail::get_flags(ctx, format, ts...);
 			} else {
-				ctx.write(*format);
+				// do long strips of non-format chars in bulk
+				const char *first = format;
+				size_t count = 0;
+				do {
+					++format;
+					++count;
+				} while(UNLIKELY(*format != '%'));
+				
+				ctx.write(first, count);
+				continue;
 			}
 
 			++format;
@@ -886,7 +839,7 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 		return Printf(ctx, format + 1, ts...);
 	} else {
 		for (; *format; ++format) {
-			if (*format != '%' || *++format == '%') {
+			if (LIKELY(*format != '%' || *++format == '%')) {
 				ctx.write(*format);
 				continue;
 			}
@@ -932,5 +885,8 @@ int printf(const char *format, const Ts &... ts) {
 	return Printf(ctx, format, ts...);
 }
 }
+
+#undef LIKELY
+#undef UNLIKELY
 
 #endif

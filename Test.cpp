@@ -37,7 +37,7 @@ int main() {
 
 	typedef std::chrono::microseconds ms;
 
-	constexpr int count = 1000000;
+	constexpr int count = 8000000;
 
 	auto time1 = time_code<ms, count>([&Foo]() {
 		char buf[128];
