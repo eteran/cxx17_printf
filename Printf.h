@@ -8,15 +8,15 @@
 #include <cassert>
 #include <cstring>
 #include <stdexcept>
-#include <tuple>
 #include <string>
+#include <tuple>
 
 //#define CXX17_PRINTF_EXTENSIONS
 
 #ifdef __GNUC__
-	#define LIKELY(expr)   __builtin_expect((expr), 1)
-	#define UNLIKELY(expr) __builtin_expect((expr), 0)
-	#define NO_INLINE      __attribute__ ((noinline))
+	#define LIKELY(expr)   __builtin_expect(!!(expr), 1)
+	#define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+	#define NO_INLINE      __attribute__((noinline))
 #else
 	#define LIKELY(expr)   (expr)
 	#define UNLIKELY(expr) (expr)
@@ -55,24 +55,25 @@ struct Flags {
 
 static_assert(sizeof(Flags) == sizeof(uint8_t));
 
-
-[[noreturn]] void NO_INLINE ThrowError(const char *what) {
+[[noreturn]]
+void NO_INLINE ThrowError(const char *what) {
 	throw format_error(what);
 }
 
 template <bool Upper, size_t Divisor, class T, size_t N>
 std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
-	if constexpr(Divisor == 10) {
+
+	if constexpr (Divisor == 10) {
 		static constexpr const char digit_pairs[201] = {"00010203040506070809"
-	                                            		"10111213141516171819"
-	                                            		"20212223242526272829"
-	                                            		"30313233343536373839"
-	                                            		"40414243444546474849"
-	                                            		"50515253545556575859"
-	                                            		"60616263646566676869"
-	                                            		"70717273747576777879"
-	                                            		"80818283848586878889"
-	                                            		"90919293949596979899"};
+		                                                "10111213141516171819"
+		                                                "20212223242526272829"
+		                                                "30313233343536373839"
+		                                                "40414243444546474849"
+		                                                "50515253545556575859"
+		                                                "60616263646566676869"
+		                                                "70717273747576777879"
+		                                                "80818283848586878889"
+		                                                "90919293949596979899"};
 
 		char *it = &buf[N - 2];
 		if constexpr (std::is_signed<T>::value) {
@@ -91,15 +92,14 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 					it++;
 				}
 
-
-				if(flags.space) {
+				if (flags.space) {
 					if (flags.padding) {
 						while (&buf[N] - it < width - 1) {
 							*--it = '0';
 						}
 					}
 					*--it = ' ';
-				} else if(flags.sign) {
+				} else if (flags.sign) {
 					if (flags.padding) {
 						while (&buf[N] - it < width - 1) {
 							*--it = '0';
@@ -154,15 +154,14 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 					it++;
 				}
 
-
-				if(flags.space) {
+				if (flags.space) {
 					if (flags.padding) {
 						while (&buf[N] - it < width - 1) {
 							*--it = '0';
 						}
 					}
 					*--it = ' ';
-				} else if(flags.sign) {
+				} else if (flags.sign) {
 					if (flags.padding) {
 						while (&buf[N] - it < width - 1) {
 							*--it = '0';
@@ -182,44 +181,40 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		return std::make_tuple(it, &buf[N] - it);
 	} else if constexpr (Divisor == 16) {
-		[[maybe_unused]]
-		static constexpr const char xdigit_pairs_l[513] = {"000102030405060708090a0b0c0d0e0f"
-	                                            		   "101112131415161718191a1b1c1d1e1f"
-	                                            		   "202122232425262728292a2b2c2d2e2f"
-	                                            		   "303132333435363738393a3b3c3d3e3f"
-	                                            		   "404142434445464748494a4b4c4d4e4f"
-	                                            		   "505152535455565758595a5b5c5d5e5f"
-	                                            		   "606162636465666768696a6b6c6d6e6f"
-	                                            		   "707172737475767778797a7b7c7d7e7f"
-	                                            		   "808182838485868788898a8b8c8d8e8f"
-	                                            		   "909192939495969798999a9b9c9d9e9f"
-														   "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
-														   "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
-														   "c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
-														   "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
-														   "e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
-														   "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-														   };
+		[[maybe_unused]] static constexpr const char xdigit_pairs_l[513] = {"000102030405060708090a0b0c0d0e0f"
+		                                                                    "101112131415161718191a1b1c1d1e1f"
+		                                                                    "202122232425262728292a2b2c2d2e2f"
+		                                                                    "303132333435363738393a3b3c3d3e3f"
+		                                                                    "404142434445464748494a4b4c4d4e4f"
+		                                                                    "505152535455565758595a5b5c5d5e5f"
+		                                                                    "606162636465666768696a6b6c6d6e6f"
+		                                                                    "707172737475767778797a7b7c7d7e7f"
+		                                                                    "808182838485868788898a8b8c8d8e8f"
+		                                                                    "909192939495969798999a9b9c9d9e9f"
+		                                                                    "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+		                                                                    "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+		                                                                    "c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
+		                                                                    "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+		                                                                    "e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+		                                                                    "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"};
 
-		[[maybe_unused]]
-		static constexpr const char xdigit_pairs_u[513] = {"000102030405060708090A0B0C0D0E0F"
-	                                            		   "101112131415161718191A1B1C1D1E1F"
-	                                            		   "202122232425262728292A2B2C2D2E2F"
-	                                            		   "303132333435363738393A3B3C3D3E3F"
-	                                            		   "404142434445464748494A4B4C4D4E4F"
-	                                            		   "505152535455565758595A5B5C5D5E5F"
-	                                            		   "606162636465666768696A6B6C6D6E6F"
-	                                            		   "707172737475767778797A7B7C7D7E7F"
-	                                            		   "808182838485868788898A8B8C8D8E8F"
-	                                            		   "909192939495969798999A9B9C9D9E9F"
-														   "A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
-														   "B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF"
-														   "C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF"
-														   "D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF"
-														   "E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF"
-														   "F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
-														   };
-														   
+		[[maybe_unused]] static constexpr const char xdigit_pairs_u[513] = {"000102030405060708090A0B0C0D0E0F"
+		                                                                    "101112131415161718191A1B1C1D1E1F"
+		                                                                    "202122232425262728292A2B2C2D2E2F"
+		                                                                    "303132333435363738393A3B3C3D3E3F"
+		                                                                    "404142434445464748494A4B4C4D4E4F"
+		                                                                    "505152535455565758595A5B5C5D5E5F"
+		                                                                    "606162636465666768696A6B6C6D6E6F"
+		                                                                    "707172737475767778797A7B7C7D7E7F"
+		                                                                    "808182838485868788898A8B8C8D8E8F"
+		                                                                    "909192939495969798999A9B9C9D9E9F"
+		                                                                    "A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
+		                                                                    "B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF"
+		                                                                    "C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF"
+		                                                                    "D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF"
+		                                                                    "E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF"
+		                                                                    "F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"};
+
 		// NOTE(eteran): we include the x/X, here as an easy way to put the
 		//               upper/lower case prefix for hex numbers
 		[[maybe_unused]] static constexpr const char alphabet_l[] = "0123456789abcdefx";
@@ -271,14 +266,13 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		return std::make_tuple(p, (buf + N) - p);
 	} else if constexpr (Divisor == 8) {
 		static constexpr const char digit_pairs[129] = {"0001020304050607"
-	                                            		"1011121314151617"
-	                                            		"2021222324252627"
-	                                            		"3031323334353637"
-	                                            		"4041424344454647"
-	                                            		"5051525354555657"
-	                                            		"6061626364656667"
-	                                            		"7071727374757677"
-														};
+                                                        "1011121314151617"
+                                                        "2021222324252627"
+                                                        "3031323334353637"
+                                                        "4041424344454647"
+                                                        "5051525354555657"
+                                                        "6061626364656667"
+                                                        "7071727374757677"};
 		typename std::make_unsigned<T>::type ud = d;
 
 		char *p = buf + N;
@@ -290,7 +284,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 				ud /= 64;
 			}
 
-			while (ud > 0) {			
+			while (ud > 0) {
 				p -= 1;
 				std::memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
 				ud /= 8;
@@ -310,8 +304,9 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
-	} if constexpr (Divisor == 2) {
-		static constexpr const char digit_pairs[9] = { "00011011" };
+	}
+	if constexpr (Divisor == 2) {
+		static constexpr const char digit_pairs[9] = {"00011011"};
 
 		typename std::make_unsigned<T>::type ud = d;
 
@@ -324,7 +319,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 				ud /= 4;
 			}
 
-			while (ud > 0) {			
+			while (ud > 0) {
 				p -= 1;
 				std::memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
 				ud /= 2;
@@ -345,10 +340,9 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		return std::make_tuple(p, (buf + N) - p);
 	}
-	
+
 	ThrowError("Invalid Base Used In Integer To String Conversion");
 }
-
 
 //------------------------------------------------------------------------------
 // Name: itoa
@@ -408,7 +402,7 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	// NOTE(eteran): len is at most strlen, possible is less
 	// so we can just loop len times
 	width -= len;
-	
+
 	ctx.write(s_ptr, len);
 
 	// if left justified padding goes last...
@@ -433,15 +427,15 @@ std::string to_string(T) {
 
 template <class T>
 std::string formatted_object(T obj) {
-	using std::to_string;
 	using detail::to_string;
+	using std::to_string;
 	return to_string(obj);
 }
 #endif
 
 template <class T>
 constexpr const char *formatted_string([[maybe_unused]] T s) {
-	if constexpr(std::is_convertible<T, const char *>::value) {
+	if constexpr (std::is_convertible<T, const char *>::value) {
 		return static_cast<const char *>(s);
 	}
 	ThrowError("Non-String Argument For String Format");
@@ -449,16 +443,15 @@ constexpr const char *formatted_string([[maybe_unused]] T s) {
 
 template <class R, class T>
 constexpr R formatted_pointer([[maybe_unused]] T p) {
-	if constexpr(std::is_convertible<T, const void *>::value) {
+	if constexpr (std::is_convertible<T, const void *>::value) {
 		return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
 	}
 	ThrowError("Non-Pointer Argument For Pointer Format");
 }
 
-
 template <class R, class T>
 constexpr R formatted_integer([[maybe_unused]] T n) {
-	if constexpr(std::is_integral<T>::value) {
+	if constexpr (std::is_integral<T>::value) {
 		return static_cast<R>(n);
 	}
 	ThrowError("Non-Integer Argument For Integer Format");
@@ -493,9 +486,10 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		return Printf(ctx, format + 1, ts...);
 
 	case 'p':
-		precision = 1;
-		ch = 'x';
+		precision    = 1;
+		ch           = 'x';
 		flags.prefix = 1;
+		
 		// NOTE(eteran): GNU printf prints "(nil)" for NULL pointers, we print 0x0
 		std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_pointer<uintptr_t>(arg), width, flags);
 
@@ -582,7 +576,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		// char is promoted to an int when pushed on the stack
 		num_buf[0] = formatted_integer<char>(arg);
 		num_buf[1] = '\0';
-		s_ptr = num_buf;
+		s_ptr      = num_buf;
 		output_string('c', s_ptr, precision, width, flags, 1, ctx);
 		return Printf(ctx, format + 1, ts...);
 
@@ -747,7 +741,7 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 		ThrowError("Internal Error");
 	} else {
 		char *endptr;
-		width = std::strtol(format, &endptr, 10);
+		width  = std::strtol(format, &endptr, 10);
 		format = endptr;
 		return get_precision(ctx, format, flags, width, arg, ts...);
 	}
@@ -775,7 +769,7 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 			break;
 		case '+':
 			// sign, overrides space
-			f.sign = 1;
+			f.sign  = 1;
 			f.space = 0;
 			++format;
 			break;
@@ -798,10 +792,11 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 		default:
 			done = true;
 		}
-	} while(!done);
+	} while (!done);
 
 	return get_width(ctx, format, f, ts...);
 }
+
 }
 
 //------------------------------------------------------------------------------
@@ -826,8 +821,8 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 				do {
 					++format;
 					++count;
-				} while(UNLIKELY(*format != '%'));
-				
+				} while (UNLIKELY(*format != '%'));
+
 				ctx.write(first, count);
 				continue;
 			}
@@ -884,6 +879,7 @@ int printf(const char *format, const Ts &... ts) {
 	stdout_writer ctx;
 	return Printf(ctx, format, ts...);
 }
+
 }
 
 #undef LIKELY
