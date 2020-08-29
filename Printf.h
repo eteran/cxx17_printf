@@ -63,7 +63,7 @@ void NO_INLINE ThrowError(const char *what) {
 }
 
 template <bool Upper, size_t Divisor, class T, size_t N>
-std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) noexcept {
+std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags flags) {
 
 	if constexpr (Divisor == 10) {
 		static constexpr const char digit_pairs[201] = {"00010203040506070809"
@@ -353,7 +353,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 //       when the division can use more efficient operations
 //------------------------------------------------------------------------------
 template <class T, size_t N>
-std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, T d, int width, Flags flags) noexcept {
+std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, T d, int width, Flags flags) {
 
 	if (d == 0 && precision == 0) {
 		*buf = '\0';
@@ -386,7 +386,7 @@ std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, 
 // Note: ch is the current format specifier
 //------------------------------------------------------------------------------
 template <class Context>
-void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) {
+void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) noexcept {
 
 	if ((ch == 's' && precision >= 0 && precision < len)) {
 		len = precision;
@@ -401,8 +401,8 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	}
 
 	// output the string
-	// NOTE(eteran): len is at most strlen, possible is less
-	// so we can just loop len times
+	// NOTE(eteran): len is at most strlen, possibly is less
+	// so we can write len chars
 	width -= len;
 
 	ctx.write(s_ptr, len);
@@ -418,7 +418,7 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 // NOTE(eteran): Here is some code to fetch arguments of specific types.
 
 #ifdef CXX17_PRINTF_EXTENSIONS
-inline std::string formatted_object(std::string obj) {
+constexpr std::string formatted_object(std::string obj) {
 	return obj;
 }
 
