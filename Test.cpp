@@ -37,11 +37,11 @@ int main() {
 
 	typedef std::chrono::microseconds ms;
 
-	constexpr int count = 8000000;
+	constexpr int count = 800000;
 
 	auto time1 = time_code<ms, count>([&Foo]() {
 		char buf[128];
-		cxx17::sprintf(buf, sizeof(buf), "hello %*s, %c, %d, %08x %p %016u %02x %016o\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1, 1234);
+		cxx17::sprintf(buf, "hello %*s, %c, %d, %08x %p %016u %02x %016o\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1, 1234);
 	});
 
 	auto time2 = time_code<ms, count>([&Foo]() {
@@ -56,7 +56,7 @@ int main() {
 	{
 		std::string s = "[std::string]!";
 		cxx17::sprintf(std::cout, "hello %10? %?\n", s, Test());
-		
+
 		cxx17::printf("%032b\n", 5ul);
 		cxx17::printf("%032b\n", 1234ul);
 	}

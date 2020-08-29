@@ -5,11 +5,16 @@
 #include <cstddef>
 #include <cstring>
 #include <iterator>
+#include <ostream>
 
 namespace cxx17 {
 
 // This context writes to a buffer
 struct buffer_writer  {
+
+	template <size_t N>
+	buffer_writer(char (&buffer)[N]) : ptr_(buffer), size_(N) {
+	}
 
 	buffer_writer(char *buffer, size_t size) : ptr_(buffer), size_(size) {
 	}
@@ -21,7 +26,7 @@ struct buffer_writer  {
 		}
 		++written;
 	}
-	
+
 	void write(const char *p, size_t n) {
 		size_t count = std::min(size_, n);
 		std::memcpy(ptr_, p, count);
@@ -50,12 +55,12 @@ struct ostream_writer {
 		os_.put(ch);
 		++written;
 	}
-	
+
 	void write(const char *p, size_t n) {
 		os_.write(p, n);
 		written+= n;
 	}
-	
+
 	void done() noexcept {}
 
 	std::ostream &os_;
@@ -73,13 +78,13 @@ struct container_writer {
 		*it_++ = ch;
 		++written;
 	}
-	
+
 	void write(const char *p, size_t n) {
 		while(n--) {
 			write(*p++);
 		}
 	}
-	
+
 	void done() noexcept {}
 
 	std::back_insert_iterator<C> it_;
@@ -96,11 +101,11 @@ struct stdio_writer {
 		putc(ch, stream_);
 		++written;
 	}
-	
+
 	void write(const char *p, size_t n) {
 		written += fwrite(p, n, 1, stream_);
 	}
-	
+
 	void done() noexcept {}
 
 	FILE *stream_;
@@ -114,13 +119,13 @@ struct stdout_writer {
 		putchar(ch);
 		++written;
 	}
-	
+
 	void write(const char *p, size_t n) {
 		written += fwrite(p, n, 1, stdout);
 	}
-	
+
 	void done() noexcept {}
-	
+
 	size_t written = 0;
 };
 

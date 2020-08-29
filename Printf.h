@@ -33,15 +33,15 @@ struct format_error : std::runtime_error {
 namespace detail {
 
 enum class Modifiers : uint8_t {
-	MOD_NONE,
-	MOD_CHAR,
-	MOD_SHORT,
-	MOD_LONG,
-	MOD_LONG_LONG,
-	MOD_LONG_DOUBLE,
-	MOD_INTMAX_T,
-	MOD_SIZE_T,
-	MOD_PTRDIFF_T
+	None,
+	Char,
+	Short,
+	Long,
+	LongLong,
+	LongDouble,
+	IntMaxT,
+	SizeT,
+	PtrDiffT
 };
 
 struct Flags {
@@ -56,6 +56,8 @@ struct Flags {
 static_assert(sizeof(Flags) == sizeof(uint8_t));
 
 [[noreturn]]
+// NOTE(eteran): exception throwing is considered the "cold path"
+// so let's never inline it to keep the hot path small
 void NO_INLINE ThrowError(const char *what) {
 	throw format_error(what);
 }
@@ -489,7 +491,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		precision    = 1;
 		ch           = 'x';
 		flags.prefix = 1;
-		
+
 		// NOTE(eteran): GNU printf prints "(nil)" for NULL pointers, we print 0x0
 		std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_pointer<uintptr_t>(arg), width, flags);
 
@@ -507,25 +509,25 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		}
 
 		switch (modifier) {
-		case Modifiers::MOD_CHAR:
+		case Modifiers::Char:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<unsigned char>(arg), width, flags);
 			break;
-		case Modifiers::MOD_SHORT:
+		case Modifiers::Short:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<unsigned short int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_LONG:
+		case Modifiers::Long:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<unsigned long int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_LONG_LONG:
+		case Modifiers::LongLong:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<unsigned long long int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_INTMAX_T:
+		case Modifiers::IntMaxT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<uintmax_t>(arg), width, flags);
 			break;
-		case Modifiers::MOD_SIZE_T:
+		case Modifiers::SizeT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<size_t>(arg), width, flags);
 			break;
-		case Modifiers::MOD_PTRDIFF_T:
+		case Modifiers::PtrDiffT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<std::make_unsigned<ptrdiff_t>::type>(arg), width, flags);
 			break;
 		default:
@@ -543,25 +545,25 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		}
 
 		switch (modifier) {
-		case Modifiers::MOD_CHAR:
+		case Modifiers::Char:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<signed char>(arg), width, flags);
 			break;
-		case Modifiers::MOD_SHORT:
+		case Modifiers::Short:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<short int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_LONG:
+		case Modifiers::Long:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<long int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_LONG_LONG:
+		case Modifiers::LongLong:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<long long int>(arg), width, flags);
 			break;
-		case Modifiers::MOD_INTMAX_T:
+		case Modifiers::IntMaxT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<intmax_t>(arg), width, flags);
 			break;
-		case Modifiers::MOD_SIZE_T:
+		case Modifiers::SizeT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<std::make_signed<size_t>::type>(arg), width, flags);
 			break;
-		case Modifiers::MOD_PTRDIFF_T:
+		case Modifiers::PtrDiffT:
 			std::tie(s_ptr, slen) = itoa(num_buf, ch, precision, formatted_integer<ptrdiff_t>(arg), width, flags);
 			break;
 		default:
@@ -598,25 +600,25 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	case 'n':
 		switch (modifier) {
-		case Modifiers::MOD_CHAR:
+		case Modifiers::Char:
 			*formatted_pointer<signed char *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_SHORT:
+		case Modifiers::Short:
 			*formatted_pointer<short int *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_LONG:
+		case Modifiers::Long:
 			*formatted_pointer<long int *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_LONG_LONG:
+		case Modifiers::LongLong:
 			*formatted_pointer<long long int *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_INTMAX_T:
+		case Modifiers::IntMaxT:
 			*formatted_pointer<intmax_t *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_SIZE_T:
+		case Modifiers::SizeT:
 			*formatted_pointer<std::make_signed<size_t>::type *>(arg) = ctx.written;
 			break;
-		case Modifiers::MOD_PTRDIFF_T:
+		case Modifiers::PtrDiffT:
 			*formatted_pointer<ptrdiff_t *>(arg) = ctx.written;
 			break;
 		default:
@@ -646,39 +648,39 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 template <class Context, class T, class... Ts>
 int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &... ts) {
 
-	Modifiers modifier = Modifiers::MOD_NONE;
+	Modifiers modifier = Modifiers::None;
 
 	switch (*format) {
 	case 'h':
-		modifier = Modifiers::MOD_SHORT;
+		modifier = Modifiers::Short;
 		++format;
 		if (*format == 'h') {
-			modifier = Modifiers::MOD_CHAR;
+			modifier = Modifiers::Char;
 			++format;
 		}
 		break;
 	case 'l':
-		modifier = Modifiers::MOD_LONG;
+		modifier = Modifiers::Long;
 		++format;
 		if (*format == 'l') {
-			modifier = Modifiers::MOD_LONG_LONG;
+			modifier = Modifiers::LongLong;
 			++format;
 		}
 		break;
 	case 'L':
-		modifier = Modifiers::MOD_LONG_DOUBLE;
+		modifier = Modifiers::LongDouble;
 		++format;
 		break;
 	case 'j':
-		modifier = Modifiers::MOD_INTMAX_T;
+		modifier = Modifiers::IntMaxT;
 		++format;
 		break;
 	case 'z':
-		modifier = Modifiers::MOD_SIZE_T;
+		modifier = Modifiers::SizeT;
 		++format;
 		break;
 	case 't':
-		modifier = Modifiers::MOD_PTRDIFF_T;
+		modifier = Modifiers::PtrDiffT;
 		++format;
 		break;
 	default:
@@ -852,7 +854,7 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 
 //------------------------------------------------------------------------------
 // Name: snprintf
-// Desc: implementation of what snprintf compatible interface
+// Desc: implementation of a snprintf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
 int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
@@ -861,8 +863,18 @@ int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
 }
 
 //------------------------------------------------------------------------------
+// Name: snprintf
+// Desc: implementation of a snprintf compatible interface, fixed bufer size safe!
+//------------------------------------------------------------------------------
+template <size_t N, class... Ts>
+int sprintf(char (&buffer)[N], const char *format, const Ts &... ts) {
+	buffer_writer ctx(buffer);
+	return Printf(ctx, format, ts...);
+}
+
+//------------------------------------------------------------------------------
 // Name: sprintf
-// Desc: implementation of what s[n]printf compatible interface
+// Desc: implementation of a s[n]printf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
 int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
@@ -872,7 +884,7 @@ int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
 
 //------------------------------------------------------------------------------
 // Name: printf
-// Desc: implementation of what printf compatible interface
+// Desc: implementation of a printf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
 int printf(const char *format, const Ts &... ts) {
