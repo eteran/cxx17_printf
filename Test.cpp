@@ -35,7 +35,7 @@ int main() {
 	cxx17::printf("hello %*s, %c, %d, %08x %p %016u %02x %016o\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1, 64);
 	       printf("hello %*s, %c, %d, %08x %p %016u %02x %016o\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1, 64);
 
-	typedef std::chrono::microseconds ms;
+	using ms =  std::chrono::microseconds;
 
 	constexpr int count = 800000;
 

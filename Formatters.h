@@ -10,17 +10,19 @@
 namespace cxx17 {
 
 // This context writes to a buffer
-struct buffer_writer  {
+struct buffer_writer {
 
 	template <size_t N>
-	buffer_writer(char (&buffer)[N]) : ptr_(buffer), size_(N) {
+	buffer_writer(char (&buffer)[N])
+		: ptr_(buffer), size_(N) {
 	}
 
-	buffer_writer(char *buffer, size_t size) : ptr_(buffer), size_(size) {
+	buffer_writer(char *buffer, size_t size)
+		: ptr_(buffer), size_(size) {
 	}
 
 	void write(char ch) noexcept {
-		if(size_ > 1) {
+		if (size_ > 1) {
 			*ptr_++ = ch;
 			--size_;
 		}
@@ -28,19 +30,19 @@ struct buffer_writer  {
 	}
 
 	void write(const char *p, size_t n) {
-		size_t count = std::min(size_, n);
+		const size_t count = std::min(size_, n);
 		std::memcpy(ptr_, p, count);
-		size_   -= count;
+		size_ -= count;
 		written += count;
 	}
 
 	void done() noexcept {
-		if(size_ != 0) {
+		if (size_ != 0) {
 			*ptr_ = '\0';
 		}
 	}
 
-	char  *ptr_;
+	char *ptr_;
 	size_t size_;
 	size_t written = 0;
 };
@@ -48,7 +50,8 @@ struct buffer_writer  {
 // This context writes to a container using a std::back_inserter
 struct ostream_writer {
 
-	ostream_writer(std::ostream &os) : os_(os) {
+	ostream_writer(std::ostream &os)
+		: os_(os) {
 	}
 
 	void write(char ch) {
@@ -58,7 +61,7 @@ struct ostream_writer {
 
 	void write(const char *p, size_t n) {
 		os_.write(p, n);
-		written+= n;
+		written += n;
 	}
 
 	void done() noexcept {}
@@ -71,7 +74,8 @@ struct ostream_writer {
 template <class C>
 struct container_writer {
 
-	container_writer(C &s) : it_(std::back_inserter(s)) {
+	container_writer(C &s)
+		: it_(std::back_inserter(s)) {
 	}
 
 	void write(char ch) {
@@ -80,7 +84,7 @@ struct container_writer {
 	}
 
 	void write(const char *p, size_t n) {
-		while(n--) {
+		while (n--) {
 			write(*p++);
 		}
 	}
@@ -94,7 +98,8 @@ struct container_writer {
 // this context writes to an STDIO stream
 struct stdio_writer {
 
-	stdio_writer(FILE *stream) : stream_(stream) {
+	stdio_writer(FILE *stream)
+		: stream_(stream) {
 	}
 
 	void write(char ch) noexcept {

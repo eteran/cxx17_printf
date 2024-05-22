@@ -11,23 +11,23 @@
 #include <string>
 #include <tuple>
 
-//#define CXX17_PRINTF_EXTENSIONS
+// #define CXX17_PRINTF_EXTENSIONS
 
 #ifdef __GNUC__
-	#define LIKELY(expr)   __builtin_expect(!!(expr), 1)
-	#define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
-	#define NO_INLINE      __attribute__((noinline))
+#define LIKELY(expr)   __builtin_expect(!!(expr), 1)
+#define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+#define NO_INLINE      __attribute__((noinline))
 #else
-	#define LIKELY(expr)   (expr)
-	#define UNLIKELY(expr) (expr)
-	#define NO_INLINE
+#define LIKELY(expr)   (expr)
+#define UNLIKELY(expr) (expr)
+#define NO_INLINE
 #endif
 
 namespace cxx17 {
 
 struct format_error : std::runtime_error {
-	format_error(const char *what_arg) : std::runtime_error(what_arg) {
-	};
+	format_error(const char *what_arg)
+		: std::runtime_error(what_arg){};
 };
 
 namespace detail {
@@ -45,11 +45,11 @@ enum class Modifiers : uint8_t {
 };
 
 struct Flags {
-	uint8_t justify  : 1;
-	uint8_t sign     : 1;
-	uint8_t space    : 1;
-	uint8_t prefix   : 1;
-	uint8_t padding  : 1;
+	uint8_t justify : 1;
+	uint8_t sign : 1;
+	uint8_t space : 1;
+	uint8_t prefix : 1;
+	uint8_t padding : 1;
 	uint8_t reserved : 3;
 };
 
@@ -67,15 +67,15 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 	if constexpr (Divisor == 10) {
 		static constexpr const char digit_pairs[201] = {"00010203040506070809"
-		                                                "10111213141516171819"
-		                                                "20212223242526272829"
-		                                                "30313233343536373839"
-		                                                "40414243444546474849"
-		                                                "50515253545556575859"
-		                                                "60616263646566676869"
-		                                                "70717273747576777879"
-		                                                "80818283848586878889"
-		                                                "90919293949596979899"};
+														"10111213141516171819"
+														"20212223242526272829"
+														"30313233343536373839"
+														"40414243444546474849"
+														"50515253545556575859"
+														"60616263646566676869"
+														"70717273747576777879"
+														"80818283848586878889"
+														"90919293949596979899"};
 
 		char *it = &buf[N - 2];
 		if constexpr (std::is_signed<T>::value) {
@@ -184,38 +184,38 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		return std::make_tuple(it, &buf[N] - it);
 	} else if constexpr (Divisor == 16) {
 		[[maybe_unused]] static constexpr const char xdigit_pairs_l[513] = {"000102030405060708090a0b0c0d0e0f"
-		                                                                    "101112131415161718191a1b1c1d1e1f"
-		                                                                    "202122232425262728292a2b2c2d2e2f"
-		                                                                    "303132333435363738393a3b3c3d3e3f"
-		                                                                    "404142434445464748494a4b4c4d4e4f"
-		                                                                    "505152535455565758595a5b5c5d5e5f"
-		                                                                    "606162636465666768696a6b6c6d6e6f"
-		                                                                    "707172737475767778797a7b7c7d7e7f"
-		                                                                    "808182838485868788898a8b8c8d8e8f"
-		                                                                    "909192939495969798999a9b9c9d9e9f"
-		                                                                    "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
-		                                                                    "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
-		                                                                    "c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
-		                                                                    "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
-		                                                                    "e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
-		                                                                    "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"};
+																			"101112131415161718191a1b1c1d1e1f"
+																			"202122232425262728292a2b2c2d2e2f"
+																			"303132333435363738393a3b3c3d3e3f"
+																			"404142434445464748494a4b4c4d4e4f"
+																			"505152535455565758595a5b5c5d5e5f"
+																			"606162636465666768696a6b6c6d6e6f"
+																			"707172737475767778797a7b7c7d7e7f"
+																			"808182838485868788898a8b8c8d8e8f"
+																			"909192939495969798999a9b9c9d9e9f"
+																			"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+																			"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+																			"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
+																			"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+																			"e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+																			"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"};
 
 		[[maybe_unused]] static constexpr const char xdigit_pairs_u[513] = {"000102030405060708090A0B0C0D0E0F"
-		                                                                    "101112131415161718191A1B1C1D1E1F"
-		                                                                    "202122232425262728292A2B2C2D2E2F"
-		                                                                    "303132333435363738393A3B3C3D3E3F"
-		                                                                    "404142434445464748494A4B4C4D4E4F"
-		                                                                    "505152535455565758595A5B5C5D5E5F"
-		                                                                    "606162636465666768696A6B6C6D6E6F"
-		                                                                    "707172737475767778797A7B7C7D7E7F"
-		                                                                    "808182838485868788898A8B8C8D8E8F"
-		                                                                    "909192939495969798999A9B9C9D9E9F"
-		                                                                    "A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
-		                                                                    "B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF"
-		                                                                    "C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF"
-		                                                                    "D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF"
-		                                                                    "E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF"
-		                                                                    "F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"};
+																			"101112131415161718191A1B1C1D1E1F"
+																			"202122232425262728292A2B2C2D2E2F"
+																			"303132333435363738393A3B3C3D3E3F"
+																			"404142434445464748494A4B4C4D4E4F"
+																			"505152535455565758595A5B5C5D5E5F"
+																			"606162636465666768696A6B6C6D6E6F"
+																			"707172737475767778797A7B7C7D7E7F"
+																			"808182838485868788898A8B8C8D8E8F"
+																			"909192939495969798999A9B9C9D9E9F"
+																			"A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
+																			"B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF"
+																			"C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF"
+																			"D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF"
+																			"E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF"
+																			"F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"};
 
 		// NOTE(eteran): we include the x/X, here as an easy way to put the
 		//               upper/lower case prefix for hex numbers
@@ -268,14 +268,14 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		return std::make_tuple(p, (buf + N) - p);
 	} else if constexpr (Divisor == 8) {
 		static constexpr const char digit_pairs[129] = {"0001020304050607"
-                                                        "1011121314151617"
-                                                        "2021222324252627"
-                                                        "3031323334353637"
-                                                        "4041424344454647"
-                                                        "5051525354555657"
-                                                        "6061626364656667"
-                                                        "7071727374757677"};
-		typename std::make_unsigned<T>::type ud = d;
+														"1011121314151617"
+														"2021222324252627"
+														"3031323334353637"
+														"4041424344454647"
+														"5051525354555657"
+														"6061626364656667"
+														"7071727374757677"};
+		typename std::make_unsigned<T>::type ud      = d;
 
 		char *p = buf + N;
 
@@ -306,8 +306,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
-	}
-	if constexpr (Divisor == 2) {
+	} else if constexpr (Divisor == 2) {
 		static constexpr const char digit_pairs[9] = {"00011011"};
 
 		typename std::make_unsigned<T>::type ud = d;
@@ -418,7 +417,7 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 // NOTE(eteran): Here is some code to fetch arguments of specific types.
 
 #ifdef CXX17_PRINTF_EXTENSIONS
-constexpr std::string formatted_object(std::string obj) {
+std::string formatted_object(std::string obj) {
 	return obj;
 }
 
@@ -466,7 +465,7 @@ constexpr R formatted_integer([[maybe_unused]] T n) {
 //       recursively continue processing the string
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
-int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier, const T &arg, const Ts &... ts) {
+int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier, const T &arg, const Ts &...ts) {
 
 	// enough to contain a 64-bit number in bin notation + optional prefix
 	char num_buf[67];
@@ -630,7 +629,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	default:
 		ctx.write('%');
-		// FALL THROUGH
+		[[fallthrough]];
 	case '\0':
 	case '%':
 		ctx.write(ch);
@@ -646,7 +645,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 //       process_format
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
-int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &... ts) {
+int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &...ts) {
 
 	Modifiers modifier = Modifiers::None;
 
@@ -696,7 +695,7 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 //       as needed, then calls get_modifier
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
-int get_precision(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &... ts) {
+int get_precision(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &...ts) {
 
 	// default to non-existant
 	long int p = -1;
@@ -714,7 +713,7 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 			ThrowError("Internal Error");
 		} else {
 			char *endptr;
-			p = std::strtol(format, &endptr, 10);
+			p      = std::strtol(format, &endptr, 10);
 			format = endptr;
 			return get_modifier(ctx, format, flags, width, p, arg, ts...);
 		}
@@ -729,7 +728,7 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 //       needed, then calls get_precision
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
-int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const Ts &... ts) {
+int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const Ts &...ts) {
 
 	int width = 0;
 
@@ -754,9 +753,9 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 // Desc: gets the flags, if any, from the format string, then calls get_width
 //------------------------------------------------------------------------------
 template <class Context, class... Ts>
-int get_flags(Context &ctx, const char *format, const Ts &... ts) {
+int get_flags(Context &ctx, const char *format, const Ts &...ts) {
 
-	Flags f = {0, 0, 0, 0, 0, 0};
+	Flags f   = {0, 0, 0, 0, 0, 0};
 	bool done = false;
 
 	// skip past the % char
@@ -805,7 +804,7 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 // Name: Printf
 //------------------------------------------------------------------------------
 template <class Context, class... Ts>
-int Printf(Context &ctx, const char *format, const Ts &... ts) {
+int Printf(Context &ctx, const char *format, const Ts &...ts) {
 
 	assert(format);
 
@@ -819,7 +818,7 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 			} else {
 				// do long strips of non-format chars in bulk
 				const char *first = format;
-				size_t count = 0;
+				size_t count      = 0;
 				do {
 					++format;
 					++count;
@@ -857,7 +856,7 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 // Desc: implementation of a snprintf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
-int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
+int sprintf(std::ostream &os, const char *format, const Ts &...ts) {
 	ostream_writer ctx(os);
 	return Printf(ctx, format, ts...);
 }
@@ -867,7 +866,7 @@ int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
 // Desc: implementation of a snprintf compatible interface, fixed bufer size safe!
 //------------------------------------------------------------------------------
 template <size_t N, class... Ts>
-int sprintf(char (&buffer)[N], const char *format, const Ts &... ts) {
+int sprintf(char (&buffer)[N], const char *format, const Ts &...ts) {
 	buffer_writer ctx(buffer);
 	return Printf(ctx, format, ts...);
 }
@@ -877,7 +876,7 @@ int sprintf(char (&buffer)[N], const char *format, const Ts &... ts) {
 // Desc: implementation of a s[n]printf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
-int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
+int sprintf(char *str, size_t size, const char *format, const Ts &...ts) {
 	buffer_writer ctx(str, size);
 	return Printf(ctx, format, ts...);
 }
@@ -887,7 +886,7 @@ int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
 // Desc: implementation of a printf compatible interface
 //------------------------------------------------------------------------------
 template <class... Ts>
-int printf(const char *format, const Ts &... ts) {
+int printf(const char *format, const Ts &...ts) {
 	stdout_writer ctx;
 	return Printf(ctx, format, ts...);
 }
