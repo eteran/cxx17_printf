@@ -821,7 +821,7 @@ int Printf(Context &ctx, const char *format, const Ts &...ts) {
 				do {
 					++format;
 					++count;
-				} while (UNLIKELY(*format != '%'));
+				} while (*format != '\0' && UNLIKELY(*format != '%'));
 
 				ctx.write(first, count);
 				continue;

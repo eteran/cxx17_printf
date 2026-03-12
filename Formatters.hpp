@@ -33,6 +33,7 @@ struct buffer_writer {
 	void write(const char *p, size_t n) {
 		const size_t count = std::min(size_, n);
 		std::memcpy(ptr_, p, count);
+		ptr_ += count;
 		size_ -= count;
 		written += count;
 	}
@@ -109,7 +110,7 @@ struct stdio_writer {
 	}
 
 	void write(const char *p, size_t n) {
-		written += fwrite(p, n, 1, stream_);
+		written += fwrite(p, 1, n, stream_);
 	}
 
 	void done() noexcept {}
@@ -127,7 +128,7 @@ struct stdout_writer {
 	}
 
 	void write(const char *p, size_t n) {
-		written += fwrite(p, n, 1, stdout);
+		written += fwrite(p, 1, n, stdout);
 	}
 
 	void done() noexcept {}
