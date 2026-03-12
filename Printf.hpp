@@ -244,9 +244,9 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 		while (ud > 0) {
 			p -= 1;
 			if constexpr (Upper) {
-				std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0x0f) + 1], 1);
+				*p = xdigit_pairs_u[2 * (ud & 0x0f) + 1];
 			} else {
-				std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0x0f) + 1], 1);
+				*p = xdigit_pairs_l[2 * (ud & 0x0f) + 1];
 			}
 			ud /= 16;
 		}
@@ -290,7 +290,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		while (ud > 0) {
 			p -= 1;
-			std::memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
+			*p = digit_pairs[2 * (ud & 007) + 1];
 			ud /= 8;
 		}
 
@@ -322,7 +322,7 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		while (ud > 0) {
 			p -= 1;
-			std::memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
+			*p = digit_pairs[2 * (ud & 0x01) + 1];
 			ud /= 2;
 		}
 
