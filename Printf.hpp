@@ -654,8 +654,12 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	return Printf(ctx, format + 1, ts...);
 }
 
+/**
+ * @brief Gets the modifier, if any, from the format string, then calls
+ *        process_format.
+ */
 template <class Context, class T, class... Ts>
-int parse_modifier_and_dispatch(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &...ts) {
+int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &...ts) {
 
 	Modifiers modifier = Modifiers::None;
 
@@ -699,8 +703,12 @@ int parse_modifier_and_dispatch(Context &ctx, const char *format, Flags flags, l
 	return process_format(ctx, format, flags, width, precision, modifier, arg, ts...);
 }
 
+/**
+ * @brief Gets the precision, if any, either from the format string or as an
+ *        argument as needed, then calls get_modifier.
+ */
 template <class Context, class T, class... Ts>
-int parse_precision_and_dispatch(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &...ts) {
+int get_precision(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &...ts) {
 
 	// default to non-existant
 	long int p = -1;
@@ -713,18 +721,43 @@ int parse_precision_and_dispatch(Context &ctx, const char *format, Flags flags, 
 			// pull an int off the stack for processing
 			p = formatted_integer<long int>(arg);
 			if constexpr (sizeof...(ts) > 0) {
-				return parse_modifier_and_dispatch(ctx, format, flags, width, p, ts...);
+				return get_modifier(ctx, format, flags, width, p, ts...);
 			}
 			ThrowError("Internal Error");
 		} else {
 			char *endptr;
 			p      = std::strtol(format, &endptr, 10);
 			format = endptr;
-			return parse_modifier_and_dispatch(ctx, format, flags, width, p, arg, ts...);
+			return get_modifier(ctx, format, flags, width, p, arg, ts...);
 		}
 	}
 
-	return parse_modifier_and_dispatch(ctx, format, flags, width, p, arg, ts...);
+	return get_modifier(ctx, format, flags, width, p, arg, ts...);
+}
+
+/**
+ * @brief Gets the width, if any, either from the format string or as an
+ *        argument as needed, then calls get_precision.
+ */
+template <class Context, class T, class... Ts>
+int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const Ts &...ts) {
+
+	int width = 0;
+
+	if (*format == '*') {
+		++format;
+		// pull an int off the stack for processing
+		width = formatted_integer<long int>(arg);
+		if constexpr (sizeof...(ts) > 0) {
+			return get_precision(ctx, format, flags, width, ts...);
+		}
+		ThrowError("Internal Error");
+	} else {
+		char *endptr;
+		width  = std::strtol(format, &endptr, 10);
+		format = endptr;
+		return get_precision(ctx, format, flags, width, arg, ts...);
+	}
 }
 
 /**
@@ -773,28 +806,7 @@ int get_flags(Context &ctx, const char *format, const Ts &...ts) {
 		}
 	} while (!done);
 
-	if constexpr (sizeof...(ts) > 0) {
-		return [&ctx, format, f](const auto &arg, const auto &...rest) mutable {
-			long int width = 0;
-
-			if (*format == '*') {
-				++format;
-				// pull an int off the stack for width
-				width = formatted_integer<long int>(arg);
-				if constexpr (sizeof...(rest) > 0) {
-					return parse_precision_and_dispatch(ctx, format, f, width, rest...);
-				}
-				ThrowError("Internal Error");
-			} else {
-				char *endptr;
-				width  = std::strtol(format, &endptr, 10);
-				format = endptr;
-				return parse_precision_and_dispatch(ctx, format, f, width, arg, rest...);
-			}
-		}(ts...);
-	}
-
-	ThrowError("Internal Error");
+	return get_width(ctx, format, f, ts...);
 }
 
 }
