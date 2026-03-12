@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: BSD-3-Clause OR Apache-2.0
 
 #ifndef PRINTF_20160922_H_
 #define PRINTF_20160922_H_
 
-#include "Formatters.h"
+#include "Formatters.hpp"
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -16,18 +18,20 @@
 #ifdef __GNUC__
 #define LIKELY(expr)   __builtin_expect(!!(expr), 1)
 #define UNLIKELY(expr) __builtin_expect(!!(expr), 0)
-#define NO_INLINE      __attribute__((noinline))
+#define COLD_CODE      __attribute__((noinline, cold))
+#define FORCE_INLINE   __attribute__((always_inline)) inline
 #else
 #define LIKELY(expr)   (expr)
 #define UNLIKELY(expr) (expr)
-#define NO_INLINE
+#define COLD_CODE
+#define FORCE_INLINE inline
 #endif
 
 namespace cxx17 {
 
 struct format_error : std::runtime_error {
 	format_error(const char *what_arg)
-		: std::runtime_error(what_arg){};
+		: std::runtime_error(what_arg) {};
 };
 
 namespace detail {
@@ -58,7 +62,7 @@ static_assert(sizeof(Flags) == sizeof(uint8_t));
 [[noreturn]]
 // NOTE(eteran): exception throwing is considered the "cold path"
 // so let's never inline it to keep the hot path small
-void NO_INLINE ThrowError(const char *what) {
+void COLD_CODE ThrowError(const char *what) {
 	throw format_error(what);
 }
 
@@ -345,12 +349,13 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 	ThrowError("Invalid Base Used In Integer To String Conversion");
 }
 
-//------------------------------------------------------------------------------
-// Name: itoa
-// Desc: as a minor optimization, let's determine a few things up front and pass
-//       them as template parameters enabling some more aggressive optimizations
-//       when the division can use more efficient operations
-//------------------------------------------------------------------------------
+/**
+ * @brief Converts an integer to a string in the specified base.
+ *
+ * As a minor optimization, determines a few things up front and passes
+ * them as template parameters enabling more aggressive optimizations
+ * when the division can use more efficient operations.
+ */
 template <class T, size_t N>
 std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, T d, int width, Flags flags) {
 
@@ -379,11 +384,10 @@ std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, 
 	}
 }
 
-//------------------------------------------------------------------------------
-// Name: output_string
-// Desc: prints a string to the Context object, taking into account padding flags
-// Note: ch is the current format specifier
-//------------------------------------------------------------------------------
+/**
+ * @brief Prints a string to the Context object, taking into account padding flags.
+ * @note ch is the current format specifier.
+ */
 template <class Context>
 void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) noexcept {
 
@@ -458,12 +462,11 @@ constexpr R formatted_integer([[maybe_unused]] T n) {
 	ThrowError("Non-Integer Argument For Integer Format");
 }
 
-//------------------------------------------------------------------------------
-// Name: process_format
-// Desc: prints the next argument to the Context taking into account the flags,
-//       width, precision, and modifiers collected along the way. Then will
-//       recursively continue processing the string
-//------------------------------------------------------------------------------
+/**
+ * @brief Prints the next argument to the Context taking into account the flags,
+ *        width, precision, and modifiers collected along the way. Then
+ *        recursively continues processing the format string.
+ */
 template <class Context, class T, class... Ts>
 int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier, const T &arg, const Ts &...ts) {
 
@@ -639,11 +642,10 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	return Printf(ctx, format + 1, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: get_modifier
-// Desc: gets the modifier, if any, from the format string, then calls
-//       process_format
-//------------------------------------------------------------------------------
+/**
+ * @brief Gets the modifier, if any, from the format string, then calls
+ *        process_format.
+ */
 template <class Context, class T, class... Ts>
 int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &...ts) {
 
@@ -689,11 +691,10 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 	return process_format(ctx, format, flags, width, precision, modifier, arg, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: get_precision
-// Desc: gets the precision, if any, either from the format string or as an arg
-//       as needed, then calls get_modifier
-//------------------------------------------------------------------------------
+/**
+ * @brief Gets the precision, if any, either from the format string or as an
+ *        argument as needed, then calls get_modifier.
+ */
 template <class Context, class T, class... Ts>
 int get_precision(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &...ts) {
 
@@ -722,11 +723,10 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 	return get_modifier(ctx, format, flags, width, p, arg, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: get_width
-// Desc: gets the width if any, either from the format string or as an arg as
-//       needed, then calls get_precision
-//------------------------------------------------------------------------------
+/**
+ * @brief Gets the width, if any, either from the format string or as an
+ *        argument as needed, then calls get_precision.
+ */
 template <class Context, class T, class... Ts>
 int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const Ts &...ts) {
 
@@ -748,10 +748,9 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 	}
 }
 
-//------------------------------------------------------------------------------
-// Name: get_flags
-// Desc: gets the flags, if any, from the format string, then calls get_width
-//------------------------------------------------------------------------------
+/**
+ * @brief Gets the flags, if any, from the format string, then calls get_width.
+ */
 template <class Context, class... Ts>
 int get_flags(Context &ctx, const char *format, const Ts &...ts) {
 
@@ -800,9 +799,9 @@ int get_flags(Context &ctx, const char *format, const Ts &...ts) {
 
 }
 
-//------------------------------------------------------------------------------
-// Name: Printf
-//------------------------------------------------------------------------------
+/**
+ * @brief Core printf implementation that writes formatted output to a Context.
+ */
 template <class Context, class... Ts>
 int Printf(Context &ctx, const char *format, const Ts &...ts) {
 
@@ -851,40 +850,36 @@ int Printf(Context &ctx, const char *format, const Ts &...ts) {
 	}
 }
 
-//------------------------------------------------------------------------------
-// Name: snprintf
-// Desc: implementation of a snprintf compatible interface
-//------------------------------------------------------------------------------
+/**
+ * @brief Implementation of a sprintf-compatible interface writing to a std::ostream.
+ */
 template <class... Ts>
 int sprintf(std::ostream &os, const char *format, const Ts &...ts) {
 	ostream_writer ctx(os);
 	return Printf(ctx, format, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: snprintf
-// Desc: implementation of a snprintf compatible interface, fixed bufer size safe!
-//------------------------------------------------------------------------------
+/**
+ * @brief Implementation of a snprintf-compatible interface for fixed-size buffers.
+ */
 template <size_t N, class... Ts>
 int sprintf(char (&buffer)[N], const char *format, const Ts &...ts) {
 	buffer_writer ctx(buffer);
 	return Printf(ctx, format, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: sprintf
-// Desc: implementation of a s[n]printf compatible interface
-//------------------------------------------------------------------------------
+/**
+ * @brief Implementation of a sprintf/snprintf-compatible interface.
+ */
 template <class... Ts>
 int sprintf(char *str, size_t size, const char *format, const Ts &...ts) {
 	buffer_writer ctx(str, size);
 	return Printf(ctx, format, ts...);
 }
 
-//------------------------------------------------------------------------------
-// Name: printf
-// Desc: implementation of a printf compatible interface
-//------------------------------------------------------------------------------
+/**
+ * @brief Implementation of a printf-compatible interface writing to stdout.
+ */
 template <class... Ts>
 int printf(const char *format, const Ts &...ts) {
 	stdout_writer ctx;
@@ -895,5 +890,7 @@ int printf(const char *format, const Ts &...ts) {
 
 #undef LIKELY
 #undef UNLIKELY
+#undef COLD_CODE
+#undef FORCE_INLINE
 
 #endif

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause OR Apache-2.0
 
 #ifndef FORMATTERS_20160922_H_
 #define FORMATTERS_20160922_H_
