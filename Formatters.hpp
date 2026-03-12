@@ -4,6 +4,7 @@
 #define FORMATTERS_20160922_H_
 
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <iterator>
 #include <ostream>

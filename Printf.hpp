@@ -14,6 +14,7 @@
 #include <tuple>
 
 // #define CXX17_PRINTF_EXTENSIONS
+// #define CXX17_SUPPORT_N
 
 #ifdef __GNUC__
 #define LIKELY(expr)   __builtin_expect(!!(expr), 1)
@@ -230,43 +231,41 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		char *p = buf + N;
 
-		if (ud >= 0) {
-			while (ud > 16) {
-				p -= 2;
-				if constexpr (Upper) {
-					std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0xff)], 2);
-				} else {
-					std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0xff)], 2);
-				}
-				ud /= 256;
+		while (ud > 16) {
+			p -= 2;
+			if constexpr (Upper) {
+				std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0xff)], 2);
+			} else {
+				std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0xff)], 2);
 			}
+			ud /= 256;
+		}
 
-			while (ud > 0) {
-				p -= 1;
-				if constexpr (Upper) {
-					std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0x0f) + 1], 1);
-				} else {
-					std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0x0f) + 1], 1);
-				}
-				ud /= 16;
+		while (ud > 0) {
+			p -= 1;
+			if constexpr (Upper) {
+				std::memcpy(p, &xdigit_pairs_u[2 * (ud & 0x0f) + 1], 1);
+			} else {
+				std::memcpy(p, &xdigit_pairs_l[2 * (ud & 0x0f) + 1], 1);
 			}
+			ud /= 16;
+		}
 
-			// add in any necessary padding
-			if (flags.padding) {
-				while (&buf[N] - p < width) {
-					*--p = '0';
-				}
-			}
-
-			// add the prefix as needed
-			if (flags.prefix) {
-				if constexpr (Upper) {
-					*--p = alphabet_u[16];
-				} else {
-					*--p = alphabet_l[16];
-				}
+		// add in any necessary padding
+		if (flags.padding) {
+			while (&buf[N] - p < width) {
 				*--p = '0';
 			}
+		}
+
+		// add the prefix as needed
+		if (flags.prefix) {
+			if constexpr (Upper) {
+				*--p = alphabet_u[16];
+			} else {
+				*--p = alphabet_l[16];
+			}
+			*--p = '0';
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
@@ -283,30 +282,28 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		char *p = buf + N;
 
-		if (ud >= 0) {
-			while (ud > 64) {
-				p -= 2;
-				std::memcpy(p, &digit_pairs[2 * (ud & 077)], 2);
-				ud /= 64;
-			}
+		while (ud > 64) {
+			p -= 2;
+			std::memcpy(p, &digit_pairs[2 * (ud & 077)], 2);
+			ud /= 64;
+		}
 
-			while (ud > 0) {
-				p -= 1;
-				std::memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
-				ud /= 8;
-			}
+		while (ud > 0) {
+			p -= 1;
+			std::memcpy(p, &digit_pairs[2 * (ud & 007) + 1], 1);
+			ud /= 8;
+		}
 
-			// add in any necessary padding
-			if (flags.padding) {
-				while (&buf[N] - p < width) {
-					*--p = '0';
-				}
-			}
-
-			// add the prefix as needed
-			if (flags.prefix) {
+		// add in any necessary padding
+		if (flags.padding) {
+			while (&buf[N] - p < width) {
 				*--p = '0';
 			}
+		}
+
+		// add the prefix as needed
+		if (flags.prefix) {
+			*--p = '0';
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
@@ -317,30 +314,28 @@ std::tuple<const char *, size_t> format(char (&buf)[N], T d, int width, Flags fl
 
 		char *p = buf + N;
 
-		if (ud >= 0) {
-			while (ud > 4) {
-				p -= 2;
-				std::memcpy(p, &digit_pairs[2 * (ud & 0x03)], 2);
-				ud /= 4;
-			}
+		while (ud > 4) {
+			p -= 2;
+			std::memcpy(p, &digit_pairs[2 * (ud & 0x03)], 2);
+			ud /= 4;
+		}
 
-			while (ud > 0) {
-				p -= 1;
-				std::memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
-				ud /= 2;
-			}
+		while (ud > 0) {
+			p -= 1;
+			std::memcpy(p, &digit_pairs[2 * (ud & 0x01) + 1], 1);
+			ud /= 2;
+		}
 
-			// add in any necessary padding
-			if (flags.padding) {
-				while (&buf[N] - p < width) {
-					*--p = '0';
-				}
-			}
-
-			// add the prefix as needed
-			if (flags.prefix) {
+		// add in any necessary padding
+		if (flags.padding) {
+			while (&buf[N] - p < width) {
 				*--p = '0';
 			}
+		}
+
+		// add the prefix as needed
+		if (flags.prefix) {
+			*--p = '0';
 		}
 
 		return std::make_tuple(p, (buf + N) - p);
@@ -389,7 +384,7 @@ std::tuple<const char *, size_t> itoa(char (&buf)[N], char base, int precision, 
  * @note ch is the current format specifier.
  */
 template <class Context>
-void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) noexcept {
+void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) noexcept(noexcept(ctx.write(s_ptr, len))) {
 
 	if ((ch == 's' && precision >= 0 && precision < len)) {
 		len = precision;
@@ -600,6 +595,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		return Printf(ctx, format + 1, ts...);
 #endif
 
+#ifdef CXX17_SUPPORT_N
 	case 'n':
 		switch (modifier) {
 		case Modifiers::Char:
@@ -627,6 +623,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 			*formatted_pointer<int *>(arg) = ctx.written;
 			break;
 		}
+#endif
 
 		return Printf(ctx, format + 1, ts...);
 
