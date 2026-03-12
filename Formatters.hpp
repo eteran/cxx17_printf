@@ -32,7 +32,8 @@ struct buffer_writer {
 	}
 
 	void write(const char *p, size_t n) {
-		const size_t count = std::min(size_, n);
+		const size_t available = size_ > 0 ? size_ - 1 : 0;
+		const size_t count     = std::min(available, n);
 		std::memcpy(ptr_, p, count);
 		ptr_ += count;
 		size_ -= count;
